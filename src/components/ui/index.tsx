@@ -8,6 +8,11 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
+export * from './DetailBanner';
+export * from './StatusTabs';
+export * from './HorizontalStepper';
+export * from './VisualLadder';
+
 // Badge
 export type BadgeProps = React.HTMLAttributes<HTMLSpanElement> & {
   children?: React.ReactNode;
@@ -16,22 +21,22 @@ export type BadgeProps = React.HTMLAttributes<HTMLSpanElement> & {
 };
 
 export function Badge({ children, variant = 'default', size = 'md', className, ...props }: BadgeProps) {
-  const base = 'inline-flex items-center font-medium rounded-full transition-colors';
+  const base = 'inline-flex items-center font-medium rounded-full transition-colors border';
   
   const sizes = {
-    sm: 'px-2 py-0.5 text-xs',
-    md: 'px-2.5 py-1 text-xs',
-    lg: 'px-3 py-1.5 text-sm',
+    sm: 'px-2 py-0.5 text-[11px] gap-1',
+    md: 'px-2.5 py-1 text-xs gap-1.5',
+    lg: 'px-3 py-1.5 text-xs font-semibold gap-1.5',
   };
 
   const variants = {
-    default: 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300 border border-slate-200 dark:border-slate-700',
-    primary: 'bg-blue-50 text-blue-700 dark:bg-blue-950/60 dark:text-blue-300 border border-blue-200 dark:border-blue-800',
-    success: 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800',
-    warning: 'bg-amber-50 text-amber-700 dark:bg-amber-950/60 dark:text-amber-300 border border-amber-200 dark:border-amber-800',
-    danger: 'bg-rose-50 text-rose-700 dark:bg-rose-950/60 dark:text-rose-300 border border-rose-200 dark:border-rose-800',
-    info: 'bg-sky-50 text-sky-700 dark:bg-sky-950/60 dark:text-sky-300 border border-sky-200 dark:border-sky-800',
-    outline: 'border border-slate-300 text-slate-700 dark:border-slate-700 dark:text-slate-300 bg-transparent',
+    default: 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300 border-slate-200 dark:border-slate-700',
+    primary: 'bg-indigo-50 text-indigo-700 dark:bg-indigo-950/60 dark:text-indigo-300 border-indigo-200 dark:border-indigo-800',
+    success: 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800',
+    warning: 'bg-amber-50 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300 border-amber-200 dark:border-amber-800',
+    danger: 'bg-rose-50 text-rose-700 dark:bg-rose-950/60 dark:text-rose-300 border-rose-200 dark:border-rose-800',
+    info: 'bg-sky-50 text-sky-700 dark:bg-sky-950/60 dark:text-sky-300 border-sky-200 dark:border-sky-800',
+    outline: 'border-slate-300 text-slate-700 dark:border-slate-700 dark:text-slate-300 bg-transparent',
   };
 
   return (
@@ -58,20 +63,20 @@ export function Button({
   disabled,
   ...props
 }: ButtonProps) {
-  const base = 'inline-flex items-center justify-center font-medium rounded-lg transition-all focus:outline-none focus:ring-2 focus:ring-blue-500/40 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer';
+  const base = 'inline-flex items-center justify-center font-medium rounded-lg transition-all focus:outline-none focus:ring-2 focus:ring-indigo-500/40 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer';
 
   const sizes = {
     sm: 'px-3 py-1.5 text-xs font-medium gap-1.5',
-    md: 'px-4 py-2 text-sm gap-2',
-    lg: 'px-5 py-2.5 text-base gap-2.5',
+    md: 'px-4 py-2 text-xs font-semibold gap-2',
+    lg: 'px-5 py-2.5 text-sm font-semibold gap-2.5',
   };
 
   const variants = {
-    primary: 'bg-blue-600 hover:bg-blue-700 text-white shadow-xs dark:bg-blue-600 dark:hover:bg-blue-500',
-    secondary: 'bg-slate-100 hover:bg-slate-200 text-slate-800 dark:bg-slate-800 dark:hover:bg-slate-700 dark:text-slate-100',
+    primary: 'bg-indigo-600 hover:bg-indigo-700 text-white shadow-2xs dark:bg-indigo-600 dark:hover:bg-indigo-500',
+    secondary: 'bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 dark:bg-slate-800 dark:hover:bg-slate-700 dark:border-slate-700 dark:text-slate-100 shadow-2xs',
     outline: 'border border-slate-300 hover:bg-slate-50 text-slate-700 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800',
-    danger: 'bg-rose-600 hover:bg-rose-700 text-white shadow-xs dark:bg-rose-600 dark:hover:bg-rose-500',
-    success: 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs dark:bg-emerald-600 dark:hover:bg-emerald-500',
+    danger: 'bg-rose-600 hover:bg-rose-700 text-white shadow-2xs dark:bg-rose-600 dark:hover:bg-rose-500',
+    success: 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-2xs dark:bg-emerald-600 dark:hover:bg-emerald-500',
     ghost: 'text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800',
   };
 
@@ -101,7 +106,7 @@ export function Card({ children, className, ...props }: CardProps) {
   return (
     <div
       className={cn(
-        'bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-xl shadow-xs p-5 transition-colors',
+        'bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-2xs p-5 transition-all',
         className
       )}
       {...props}
@@ -136,7 +141,7 @@ export function Modal({ isOpen, onClose, title, children, maxWidth = 'lg' }: Mod
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-xs animate-in fade-in duration-200">
       <div className={cn('w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-xl overflow-hidden', maxWidths[maxWidth])}>
         <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200 dark:border-slate-800">
-          <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100">{title}</h3>
+          <h3 className="text-base font-bold text-slate-900 dark:text-slate-100">{title}</h3>
           <button
             onClick={onClose}
             className="p-1 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
@@ -177,7 +182,7 @@ export function Drawer({ isOpen, onClose, title, subtitle, children, width = 'xl
           <div className={cn('pointer-events-auto w-screen bg-white dark:bg-slate-900 border-l border-slate-200 dark:border-slate-800 shadow-2xl flex flex-col', widths[width])}>
             <div className="flex items-center justify-between px-6 py-5 border-b border-slate-200 dark:border-slate-800">
               <div>
-                <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">{title}</h2>
+                <h2 className="text-lg font-bold text-slate-900 dark:text-slate-100">{title}</h2>
                 {subtitle && <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{subtitle}</p>}
               </div>
               <button
@@ -206,7 +211,7 @@ export function ToastContainer() {
     warning: <AlertTriangle className="w-5 h-5 text-amber-500 shrink-0" />,
     danger: <AlertCircle className="w-5 h-5 text-rose-500 shrink-0" />,
     error: <AlertCircle className="w-5 h-5 text-rose-500 shrink-0" />,
-    info: <Info className="w-5 h-5 text-blue-500 shrink-0" />,
+    info: <Info className="w-5 h-5 text-indigo-500 shrink-0" />,
   };
 
   return (
@@ -218,8 +223,8 @@ export function ToastContainer() {
         >
           {icons[toast.type as keyof typeof icons] || icons.info}
           <div className="flex-1 min-w-0">
-            <h4 className="text-sm font-semibold text-slate-900 dark:text-slate-100">{toast.title}</h4>
-            <p className="text-xs text-slate-600 dark:text-slate-400 mt-0.5 leading-relaxed">{toast.message}</p>
+            <h4 className="text-xs font-bold text-slate-900 dark:text-slate-100">{toast.title}</h4>
+            <p className="text-[11px] text-slate-600 dark:text-slate-400 mt-0.5 leading-relaxed">{toast.message}</p>
           </div>
           <button
             onClick={() => removeToast(toast.id)}
