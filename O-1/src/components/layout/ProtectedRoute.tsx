@@ -48,7 +48,12 @@ export function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) 
           <p className="text-xs text-[#6E6C68]">
             Required: {allowedRoles.join(', ')}
           </p>
-          <Navigate to="/dashboard" replace />
+          <button
+            onClick={() => window.location.href = '/dashboard'}
+            className="mt-2 px-5 py-2.5 bg-[#FF4A1C] hover:bg-[#E03A0E] text-white text-xs font-bold rounded-full transition-all cursor-pointer shadow-lg shadow-[#FF4A1C]/20"
+          >
+            Return to Dashboard
+          </button>
         </div>
       </div>
     );

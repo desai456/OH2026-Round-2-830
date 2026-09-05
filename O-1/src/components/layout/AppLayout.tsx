@@ -31,7 +31,7 @@ export function AppLayout() {
   const [isRoleMenuOpen, setIsRoleMenuOpen] = useState(false);
 
   const { currentUser, switchRole } = useAppContext();
-  const { authUser, logout } = useAuth();
+  const { authUser, logout, loginAsDemo } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -166,8 +166,12 @@ export function AppLayout() {
                       <button
                         key={role}
                         onClick={() => {
-                          if (role === 'Customer') navigate('/customer/portal');
-                          else switchRole(role);
+                          if (role === 'Customer') {
+                            navigate('/customer/portal');
+                          } else {
+                            switchRole(role);
+                            loginAsDemo(role);
+                          }
                           setIsRoleMenuOpen(false);
                         }}
                         className={`w-full flex items-center justify-between px-3 py-2 text-xs font-medium rounded-xl transition-colors ${

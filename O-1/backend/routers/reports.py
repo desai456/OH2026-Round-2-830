@@ -1,48 +1,71 @@
-from fastapi import APIRouter, Depends, HTTPException
+import io
+from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
+from typing import Optional
 
 try:
     from backend.database import get_db
-    from backend.models import Quotation, Invoice, AuditLog
+    from backend.services.reporting import ReportingEngine
 except ImportError:
     from database import get_db
-    from models import Quotation, Invoice, AuditLog
+    from services.reporting import ReportingEngine
 
-router = APIRouter(prefix="/reports", tags=["Reporting & Dashboards"])
+router = APIRouter(prefix="/reports", tags=["Reporting & Export Engine"])
 
-@router.get("/summary")
-def get_reporting_summary(period: str = "All", sales_rep: str = "All", approval_status: str = "All", db: Session = Depends(get_db)):
-    quotes_query = db.query(Quotation)
-    if sales_rep != "All":
-        quotes_query = quotes_query.filter(Quotation.rep_name == sales_rep)
-    if approval_status != "All":
-        quotes_query = quotes_query.filter(Quotation.status == approval_status)
-        
-    quotes = quotes_query.all()
-    
-    total_pipeline = sum(float(q.grand_total or 0.0) for q in quotes)
-    avg_margin = sum(float(q.margin_percent or 0.0) for q in quotes) / len(quotes) if quotes else 0.0
-    pending_count = sum(1 for q in quotes if q.status == "Pending Approval")
-    approved_count = sum(1 for q in quotes if q.status == "Approved")
-    
-    return {
-        "period": period,
-        "sales_rep_filter": sales_rep,
-        "approval_status_filter": approval_status,
-        "total_pipeline_value": round(total_pipeline, 2),
-        "average_margin_percent": round(avg_margin, 2),
-        "total_quotations": len(quotes),
-        "pending_approvals": pending_count,
-        "approved_quotations": approved_count
+@router.get("/sales")
+def get_filtered_sales_report(
+    start_date: Optional[str] = None,
+    end_date: Optional[str] = None,
+    rep_id: Optional[str] = None,
+    sales_rep: Optional[str] = None,
+    status: Optional[str] = None,
+    approval_status: Optional[str] = None,
+    category: Optional[str] = None,
+    db: Session = Depends(get_db)
+):
+    """
+    GET /api/reports/sales
+    Executes dynamic SQLAlchemy query based on optional filter parameters.
+    """
+    engine = ReportingEngine(db)
+    filters = {
+        "start_date": start_date,
+        "end_date": end_date,
+        "sales_rep": rep_id or sales_rep,
+        "status": status or approval_status,
+        "category": category
     }
+    return engine.get_filtered_sales_data(filters)
 
-@router.get("/export/{export_type}")
-def export_report(export_type: str):
-    if export_type not in ["pdf", "xls", "csv"]:
-        raise HTTPException(status_code=400, detail="Invalid export type. Supported: pdf, xls, csv")
-        
-    return {
-        "export_type": export_type.upper(),
-        "download_url": f"/static/exports/sales_report_2026.{export_type}",
-        "status": "Ready for download"
+@router.get("/sales/export")
+def export_sales_report_csv(
+    start_date: Optional[str] = None,
+    end_date: Optional[str] = None,
+    rep_id: Optional[str] = None,
+    sales_rep: Optional[str] = None,
+    status: Optional[str] = None,
+    approval_status: Optional[str] = None,
+    category: Optional[str] = None,
+    db: Session = Depends(get_db)
+):
+    """
+    GET /api/reports/sales/export
+    Returns StreamingResponse with text/csv media type forcing browser CSV file download.
+    """
+    engine = ReportingEngine(db)
+    filters = {
+        "start_date": start_date,
+        "end_date": end_date,
+        "sales_rep": rep_id or sales_rep,
+        "status": status or approval_status,
+        "category": category
     }
+    data = engine.get_filtered_sales_data(filters)
+    csv_bytes = engine.generate_csv_export(data)
+
+    return StreamingResponse(
+        io.BytesIO(csv_bytes),
+        media_type="text/csv",
+        headers={"Content-Disposition": "attachment; filename=sales_report.csv"}
+    )

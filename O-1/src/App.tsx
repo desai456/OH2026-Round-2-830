@@ -55,21 +55,21 @@ export default function App() {
               <Route path="quotes" element={<QuotationList />} />
               <Route path="quotes/:id" element={<QuotationBuilder />} />
 
-              {/* Approvals: Sales Manager, Finance, Admin */}
+              {/* Approvals: Accessible to all authenticated team members */}
               <Route
                 path="approvals"
                 element={
-                  <ProtectedRoute allowedRoles={['Sales Manager', 'Finance', 'Admin', 'Sales Rep']}>
+                  <ProtectedRoute>
                     <ApprovalsList />
                   </ProtectedRoute>
                 }
               />
 
-              {/* Fulfillment: Operations, Admin */}
+              {/* Fulfillment: Accessible to all authenticated team members */}
               <Route
                 path="fulfillment"
                 element={
-                  <ProtectedRoute allowedRoles={['Operations', 'Admin', 'Sales Manager', 'Sales Rep']}>
+                  <ProtectedRoute>
                     <Fulfillment />
                   </ProtectedRoute>
                 }

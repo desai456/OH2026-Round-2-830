@@ -1,105 +1,82 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
-import uuid
+from typing import Optional, List
 
 try:
     from backend.database import get_db
-    from backend.models import CustomerNegotiation, Quotation, QuoteItem, ApprovalRecord, AuditLog
-    from backend.schemas import NegotiationInput
-    from backend.services.governance import calculate_blended_risk
+    from backend.services.negotiation import NegotiationEngine
+    from backend.schemas import CustomerQuotationResponse, CounterOfferPayload
 except ImportError:
     from database import get_db
-    from models import CustomerNegotiation, Quotation, QuoteItem, ApprovalRecord, AuditLog
-    from schemas import NegotiationInput
-    from services.governance import calculate_blended_risk
+    from services.negotiation import NegotiationEngine
+    from schemas import CustomerQuotationResponse, CounterOfferPayload
 
 router = APIRouter(prefix="/portal", tags=["Customer Portal Negotiation"])
 
-@router.get("/quotation/{quote_id}")
-def get_customer_portal_quote(quote_id: str, db: Session = Depends(get_db)):
-    quote = db.query(Quotation).filter(Quotation.id == quote_id).first()
-    if not quote:
-        raise HTTPException(status_code=404, detail="Quotation not found")
-        
-    items = db.query(QuoteItem).filter(QuoteItem.quotation_id == quote_id).all()
-    comments = db.query(CustomerNegotiation).filter(CustomerNegotiation.quotation_id == quote_id).order_by(CustomerNegotiation.created_at.asc()).all()
-    
+@router.post("/generate-link/{quote_id}")
+def generate_portal_magic_link(quote_id: str, db: Session = Depends(get_db)):
+    engine = NegotiationEngine(db)
+    token = engine.generate_magic_link(quote_id)
     return {
-        "id": quote.id,
-        "quote_number": quote.quote_number,
-        "customer_name": quote.customer_name,
-        "status": quote.status,
-        "subtotal": float(quote.subtotal),
-        "total_discount": float(quote.total_discount),
-        "grand_total": float(quote.grand_total),
-        "margin_percent": float(quote.margin_percent),
-        "items": [
-            {
-                "id": i.id,
-                "product_name": i.product_name,
-                "quantity": i.quantity,
-                "unit_price": float(i.unit_price),
-                "discount_percent": float(i.discount_percent),
-                "line_total": float(i.line_total)
-            }
-            for i in items
-        ],
-        "comments": [
-            {
-                "id": c.id,
-                "author_name": c.author_name,
-                "author_role": c.author_role,
-                "comment": c.comment,
-                "proposed_discount": float(c.proposed_discount) if c.proposed_discount else None,
-                "created_at": c.created_at.isoformat() if c.created_at else None
-            }
-            for c in comments
-        ]
+        "quotation_id": quote_id,
+        "token": token,
+        "magic_link": f"/customer/portal?token={token}"
     }
 
-@router.post("/negotiate")
-def submit_customer_counter(payload: NegotiationInput, db: Session = Depends(get_db)):
-    quote = db.query(Quotation).filter(Quotation.id == payload.quotation_id).first()
-    if not quote:
-        raise HTTPException(status_code=404, detail="Quotation not found")
-        
-    # Record negotiation entry
-    neg_id = f"neg-{uuid.uuid4().hex[:6]}"
-    comment_entry = CustomerNegotiation(
-        id=neg_id,
-        quotation_id=payload.quotation_id,
-        author_name=payload.author_name,
-        author_role=payload.author_role,
-        comment=payload.comment,
-        proposed_discount=payload.proposed_discount
+@router.get("/quote/{token}")
+def get_restricted_customer_quote(token: str, db: Session = Depends(get_db)):
+    """
+    GET /api/portal/quote/{token}
+    Strictly validates portal token and returns a customer-restricted payload
+    PHYSICALLY OMITTING margin_percent, cost_price, internal_notes, and risk_score.
+    """
+    engine = NegotiationEngine(db)
+    return engine.get_restricted_quotation(token)
+
+@router.post("/quote/{token}/comment")
+def add_portal_line_comment(token: str, payload: dict, db: Session = Depends(get_db)):
+    engine = NegotiationEngine(db)
+    p_token = engine.validate_token(token)
+
+    author_name = payload.get("author_name", "Customer")
+    comment_text = payload.get("comment") or payload.get("comment_text") or "Submitted comment"
+    line_id = payload.get("line_id") or payload.get("quotation_line_id")
+
+    try:
+        from backend.models import LineComment
+    except ImportError:
+        from models import LineComment
+
+    import uuid, datetime
+    comment_entry = LineComment(
+        id=f"lc-{uuid.uuid4().hex[:6]}",
+        quotation_id=p_token.quotation_id,
+        quotation_line_id=line_id,
+        author_type="CUSTOMER",
+        author_name=author_name,
+        comment_text=comment_text,
+        timestamp=datetime.datetime.utcnow()
     )
     db.add(comment_entry)
-    
-    # If proposed discount exceeds current limits, auto re-trigger approval flow
-    if payload.proposed_discount and payload.proposed_discount > 15.0:
-        quote.status = "Pending Approval"
-        quote.approval_required = "Sales Manager & Finance"
-        db.add(ApprovalRecord(id=f"app-{uuid.uuid4().hex[:6]}", quotation_id=payload.quotation_id, step="Sales Manager", status="Pending"))
-        db.add(ApprovalRecord(id=f"app-{uuid.uuid4().hex[:6]}", quotation_id=payload.quotation_id, step="Finance", status="Pending"))
-        
-        db.add(AuditLog(
-            id=f"log-{uuid.uuid4().hex[:6]}",
-            entity_type="Customer Portal",
-            entity_id=payload.quotation_id,
-            action="Customer Counter-Offer Submitted",
-            performed_by=payload.author_name,
-            details=f"Customer proposed {payload.proposed_discount}% discount. Triggered Sales Manager & Finance approval flow."
-        ))
-    else:
-        quote.status = "Under Negotiation"
-        db.add(AuditLog(
-            id=f"log-{uuid.uuid4().hex[:6]}",
-            entity_type="Customer Portal",
-            entity_id=payload.quotation_id,
-            action="Customer Comment Added",
-            performed_by=payload.author_name,
-            details=payload.comment
-        ))
-        
     db.commit()
-    return {"message": "Negotiation request submitted successfully.", "status": quote.status}
+
+    return {"message": "Comment recorded successfully", "id": comment_entry.id}
+
+@router.post("/quote/{token}/counter")
+def submit_portal_counter_offer(token: str, payload: CounterOfferPayload, db: Session = Depends(get_db)):
+    """
+    POST /api/portal/quote/{token}/counter
+    Submits customer counter offer, recalculates terms, runs DiscountRiskEngine,
+    and automatically re-routes to PENDING_MANAGER_APPROVAL if thresholds are breached.
+    """
+    engine = NegotiationEngine(db)
+    return engine.process_counter_offer(token, payload.dict())
+
+@router.post("/quote/{token}/accept")
+def accept_portal_quotation(token: str, db: Session = Depends(get_db)):
+    """
+    POST /api/portal/quote/{token}/accept
+    One-click customer acceptance confirming the current quotation.
+    """
+    engine = NegotiationEngine(db)
+    return engine.accept_quotation(token)

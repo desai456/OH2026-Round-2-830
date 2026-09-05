@@ -1,49 +1,38 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
-import uuid
+from typing import Optional
 
 try:
     from backend.database import get_db
-    from backend.models import DealHealthAlert, Quotation, AuditLog
+    from backend.services.health import DealHealthEngine
+    from backend.schemas import NudgeInput
 except ImportError:
     from database import get_db
-    from models import DealHealthAlert, Quotation, AuditLog
+    from services.health import DealHealthEngine
+    from schemas import NudgeInput
 
 router = APIRouter(prefix="/health", tags=["Deal Health & Anomaly Alerts"])
 
+@router.get("/alerts")
+def get_deal_health_alerts(db: Session = Depends(get_db)):
+    """
+    GET /api/health/alerts
+    Executes DealHealthEngine checks to detect stalled deals and rep discount outliers.
+    """
+    engine = DealHealthEngine(db)
+    return engine.get_dashboard_alerts()
+
 @router.get("/")
 def list_deal_health_alerts(db: Session = Depends(get_db)):
-    alerts = db.query(DealHealthAlert).all()
-    return [
-        {
-            "id": a.id,
-            "quotation_id": a.quotation_id,
-            "customer_name": a.customer_name,
-            "alert_type": a.alert_type,
-            "severity": a.severity,
-            "description": a.description,
-            "status": a.status,
-            "created_at": a.created_at.isoformat() if a.created_at else None
-        }
-        for a in alerts
-    ]
+    engine = DealHealthEngine(db)
+    return engine.get_dashboard_alerts()
 
-@router.post("/trigger-nudge/{alert_id}")
-def trigger_automated_nudge(alert_id: str, db: Session = Depends(get_db)):
-    alert = db.query(DealHealthAlert).filter(DealHealthAlert.id == alert_id).first()
-    if not alert:
-        raise HTTPException(status_code=404, detail="Alert not found")
-        
-    # Log escalation action audit
-    db.add(AuditLog(
-        id=f"log-{uuid.uuid4().hex[:6]}",
-        entity_type="Deal Health Alert",
-        entity_id=alert.quotation_id,
-        action="Automated Nudge Sent",
-        performed_by="DealFlow360 Autonomous Engine",
-        details=f"Triggered automated email nudge and slack alert for '{alert.alert_type}' on quote {alert.quotation_id}."
-    ))
-    
-    alert.status = "Nudge Sent"
-    db.commit()
-    return {"message": f"Automated escalation nudge sent for alert '{alert.alert_type}'."}
+@router.post("/nudge/{quotation_id}")
+def trigger_nudge_alert(quotation_id: str, payload: Optional[NudgeInput] = None, db: Session = Depends(get_db)):
+    """
+    POST /api/health/nudge/{quotation_id}
+    Triggers automated reminder nudge or manager escalation ping.
+    """
+    action_type = payload.action_type if payload else "CUSTOMER_REMINDER"
+    engine = DealHealthEngine(db)
+    return engine.trigger_nudge(quotation_id, action_type)

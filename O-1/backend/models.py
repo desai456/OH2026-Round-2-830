@@ -337,8 +337,6 @@ class DealHealthAlert(Base):
     severity = Column(String(50), default="Medium")
     description = Column(Text, nullable=False)
     status = Column(String(50), default="Active")
-    created_at = Column(DateTime, default=datetime.datetime.utcnow)
-
 class AuditLog(Base):
     __tablename__ = "audit_logs"
 
@@ -355,5 +353,44 @@ class AuditLog(Base):
     details = Column(Text, nullable=True)
     created_at = Column(DateTime, default=datetime.datetime.utcnow)
     timestamp = Column(DateTime, default=datetime.datetime.utcnow)
+
+class PortalToken(Base):
+    __tablename__ = "portal_tokens"
+
+    id = Column(String(50), primary_key=True)
+    quotation_id = Column(String(50), ForeignKey("quotations.id", ondelete="CASCADE"), nullable=False)
+    token = Column(String(255), unique=True, nullable=False)
+    expires_at = Column(DateTime, nullable=False)
+    is_active = Column(Boolean, default=True)
+    created_at = Column(DateTime, default=datetime.datetime.utcnow)
+
+class LineComment(Base):
+    __tablename__ = "line_comments"
+
+    id = Column(String(50), primary_key=True)
+    quotation_line_id = Column(String(50), ForeignKey("quote_items.id", ondelete="CASCADE"), nullable=True)
+    quotation_id = Column(String(50), ForeignKey("quotations.id", ondelete="CASCADE"), nullable=False)
+    author_type = Column(String(50), nullable=False) # 'INTERNAL' vs 'CUSTOMER'
+    author_name = Column(String(255), nullable=False)
+    comment_text = Column(Text, nullable=False)
+    timestamp = Column(DateTime, default=datetime.datetime.utcnow)
+
+class ProductPairingRule(Base):
+    __tablename__ = "product_pairing_rules"
+
+    id = Column(String(50), primary_key=True)
+    primary_product_id = Column(String(50), ForeignKey("products.id", ondelete="CASCADE"), nullable=False)
+    recommended_product_id = Column(String(50), ForeignKey("products.id", ondelete="CASCADE"), nullable=False)
+    pairing_score = Column(Integer, default=100) # Co-purchase frequency score
+
+class NotificationLog(Base):
+    __tablename__ = "notification_logs"
+
+    id = Column(String(50), primary_key=True)
+    quotation_id = Column(String(50), ForeignKey("quotations.id", ondelete="CASCADE"), nullable=False)
+    recipient_type = Column(String(50), nullable=False) # 'CUSTOMER' vs 'MANAGER'
+    action_type = Column(String(100), nullable=False) # 'CUSTOMER_REMINDER' vs 'MANAGER_ESCALATION'
+    sent_at = Column(DateTime, default=datetime.datetime.utcnow)
+
 
 
