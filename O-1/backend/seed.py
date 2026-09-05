@@ -6,8 +6,8 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')
 
 from backend.database import engine, Base, SessionLocal
 from backend.models import (
-    User, Product, DiscountTier, Warehouse, Inventory,
-    SubscriptionPlan, Quotation, QuoteItem, ApprovalRecord,
+    User, Customer, ProductCategory, DiscountTierRule, Product, DiscountTier,
+    Warehouse, Inventory, SubscriptionPlan, Quotation, QuoteItem, ApprovalRecord,
     DealHealthAlert, AuditLog
 )
 
@@ -22,12 +22,37 @@ def seed_database():
             print("Database already contains data! Skipping seed.")
             return
             
-        print("Seeding users...")
+        print("Seeding users & customers...")
         db.add_all([
             User(id="usr-001", email="alex.morgan@dealflow360.com", password_hash="hash", full_name="Alex Morgan", role="Sales Rep", customer_tier="Gold", company_name="DealFlow360 Internal"),
             User(id="usr-002", email="sarah.vance@dealflow360.com", password_hash="hash", full_name="Sarah Vance", role="Sales Manager", customer_tier="Gold", company_name="DealFlow360 Internal"),
             User(id="usr-003", email="marcus.brody@dealflow360.com", password_hash="hash", full_name="Marcus Brody", role="Finance", customer_tier="Gold", company_name="DealFlow360 Internal"),
             User(id="usr-004", email="buyer@acmecorp.com", password_hash="hash", full_name="John Miller", role="Customer", customer_tier="Gold", company_name="Acme Corp")
+        ])
+
+        db.add_all([
+            Customer(id="cust-001", name="Acme Corp", tier="Gold", email="buyer@acmecorp.com"),
+            Customer(id="cust-002", name="Stark Industries", tier="Gold", email="pepper@stark.com"),
+            Customer(id="cust-003", name="Wayne Enterprises", tier="Silver", email="lucius@wayne.com")
+        ])
+
+        print("Seeding product categories & tier rules...")
+        db.add_all([
+            ProductCategory(id="cat-hw", name="Hardware", default_margin_pct=35.0, max_discount_limit_pct=15.0),
+            ProductCategory(id="cat-sv", name="Services", default_margin_pct=30.0, max_discount_limit_pct=10.0),
+            ProductCategory(id="cat-sub", name="Subscriptions", default_margin_pct=60.0, max_discount_limit_pct=15.0)
+        ])
+
+        db.add_all([
+            DiscountTierRule(id="dtr-1", customer_tier="Gold", category_name="Hardware", max_allowed_discount_pct=15.0),
+            DiscountTierRule(id="dtr-2", customer_tier="Gold", category_name="Services", max_allowed_discount_pct=10.0),
+            DiscountTierRule(id="dtr-3", customer_tier="Gold", category_name="Subscriptions", max_allowed_discount_pct=15.0),
+            DiscountTierRule(id="dtr-4", customer_tier="Silver", category_name="Hardware", max_allowed_discount_pct=10.0),
+            DiscountTierRule(id="dtr-5", customer_tier="Silver", category_name="Services", max_allowed_discount_pct=5.0),
+            DiscountTierRule(id="dtr-6", customer_tier="Silver", category_name="Subscriptions", max_allowed_discount_pct=10.0),
+            DiscountTierRule(id="dtr-7", customer_tier="Bronze", category_name="Hardware", max_allowed_discount_pct=5.0),
+            DiscountTierRule(id="dtr-8", customer_tier="Bronze", category_name="Services", max_allowed_discount_pct=3.0),
+            DiscountTierRule(id="dtr-9", customer_tier="Bronze", category_name="Subscriptions", max_allowed_discount_pct=5.0)
         ])
         
         print("Seeding products...")

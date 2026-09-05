@@ -14,16 +14,18 @@ try:
     from backend.seed import seed_database
     from backend.routers import (
         auth, products, quotations, approvals,
-        warehouses, subscriptions, portal, health, reports
+        warehouses, subscriptions, portal, health, reports, ml_insights, billing
     )
+    from backend.services.ml_anomaly import ensure_model_ready
 except ImportError:
     from config import settings
     from database import engine, Base
     from seed import seed_database
     from routers import (
         auth, products, quotations, approvals,
-        warehouses, subscriptions, portal, health, reports
+        warehouses, subscriptions, portal, health, reports, ml_insights
     )
+    from services.ml_anomaly import ensure_model_ready
 
 app = FastAPI(
     title=settings.PROJECT_NAME,
@@ -47,16 +49,30 @@ app.include_router(products.router, prefix=settings.API_PREFIX)
 app.include_router(quotations.router, prefix=settings.API_PREFIX)
 app.include_router(approvals.router, prefix=settings.API_PREFIX)
 app.include_router(warehouses.router, prefix=settings.API_PREFIX)
+app.include_router(warehouses.fulfillment_router, prefix=settings.API_PREFIX)
+app.include_router(warehouses.inventory_router, prefix=settings.API_PREFIX)
 app.include_router(subscriptions.router, prefix=settings.API_PREFIX)
+app.include_router(billing.router, prefix=settings.API_PREFIX)
 app.include_router(portal.router, prefix=settings.API_PREFIX)
 app.include_router(health.router, prefix=settings.API_PREFIX)
 app.include_router(reports.router, prefix=settings.API_PREFIX)
+app.include_router(ml_insights.router, prefix=settings.API_PREFIX)
+
 
 @app.on_event("startup")
 def on_startup():
     print("Initializing DealFlow360 Database Schema & Seeding data...")
     Base.metadata.create_all(bind=engine)
     seed_database()
+
+    print("Loading discount anomaly detection model (Isolation Forest + LOF)...")
+    model_meta = ensure_model_ready()
+    if model_meta:
+        print(
+            f"Discount anomaly model ready: {model_meta.get('model_version')} "
+            f"trained on {model_meta.get('n_training_rows')} rows "
+            f"(source={model_meta.get('data_source')})."
+        )
 
 @app.get("/")
 def root():

@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { UserRole } from '../types';
+import { api } from '../services/api';
 
 export interface AuthUser {
   id: string;
@@ -22,7 +23,7 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// Simulated user store (in-memory for demo)
+// Simulated user store (in-memory for demo fallback)
 const DEMO_ACCOUNTS: Record<string, AuthUser> = {
   'alex.morgan@dealflow360.io': {
     id: 'u1', name: 'Alex Morgan', email: 'alex.morgan@dealflow360.io',
@@ -76,16 +77,32 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const login = async (email: string, password: string, role?: UserRole): Promise<boolean> => {
-    await new Promise(r => setTimeout(r, 600)); // Simulate API call
-
-    // Check demo accounts (any password works for demo accounts)
     const normalizedEmail = email.toLowerCase().trim();
+
+    // Call PostgreSQL Backend API
+    try {
+      const res = await api.login({ email: normalizedEmail, password });
+      if (res && res.id) {
+        const user: AuthUser = {
+          id: res.id,
+          name: res.full_name || normalizedEmail.split('@')[0],
+          email: res.email,
+          role: (res.role as UserRole) || role || 'Sales Rep',
+          company: res.company_name || undefined,
+          token: `tok_${res.id}`,
+        };
+        persistUser(user);
+        return true;
+      }
+    } catch (err) {
+      console.warn('[AuthContext] Backend login failed, checking local state:', err);
+    }
+
     if (DEMO_ACCOUNTS[normalizedEmail]) {
       persistUser(DEMO_ACCOUNTS[normalizedEmail]);
       return true;
     }
 
-    // Check registered accounts from localStorage
     const registered = JSON.parse(localStorage.getItem('dealflow360_registered_users') || '{}');
     if (registered[normalizedEmail] && registered[normalizedEmail].password === password) {
       const user = registered[normalizedEmail] as AuthUser & { password: string };
@@ -98,17 +115,36 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const signup = async (name: string, email: string, password: string, role: UserRole, company?: string): Promise<boolean> => {
-    await new Promise(r => setTimeout(r, 800)); // Simulate API call
-
     const normalizedEmail = email.toLowerCase().trim();
 
-    // Check if email already exists
-    if (DEMO_ACCOUNTS[normalizedEmail]) return false;
+    // Call PostgreSQL Backend API to persist user in PostgreSQL Database
+    try {
+      const res = await api.signup({
+        full_name: name,
+        email: normalizedEmail,
+        password,
+        role,
+        company_name: company || 'DealFlow360 Internal',
+        customer_tier: role === 'Customer' ? 'Gold' : undefined,
+      });
 
-    const registered = JSON.parse(localStorage.getItem('dealflow360_registered_users') || '{}');
-    if (registered[normalizedEmail]) return false;
+      if (res && res.id) {
+        const user: AuthUser = {
+          id: res.id,
+          name: res.full_name || name,
+          email: res.email,
+          role: (res.role as UserRole) || role,
+          company: res.company_name || company || undefined,
+          token: `tok_${res.id}`,
+        };
+        persistUser(user);
+        return true;
+      }
+    } catch (err) {
+      console.error('[AuthContext] Backend signup error:', err);
+    }
 
-    // Create new user
+    // Local fallback
     const newUser: AuthUser & { password: string } = {
       id: `u-custom-${Date.now()}`,
       name,
@@ -119,6 +155,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       password,
     };
 
+    const registered = JSON.parse(localStorage.getItem('dealflow360_registered_users') || '{}');
     registered[normalizedEmail] = newUser;
     localStorage.setItem('dealflow360_registered_users', JSON.stringify(registered));
 
@@ -126,6 +163,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     persistUser(userWithoutPassword);
     return true;
   };
+
 
   const logout = () => {
     setAuthUser(null);

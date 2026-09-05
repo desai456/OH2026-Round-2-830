@@ -135,41 +135,64 @@ export default function ApprovalsList() {
                       </Badge>
                     </td>
                     <td className="py-4 px-5 text-center">
-                      <div className="flex items-center justify-center gap-2">
-                        <button
-                          onClick={() => {
-                            setReviewingQuote(q);
-                            setActionType('approve');
-                          }}
-                          className="px-3 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 font-bold hover:bg-emerald-500/20 transition-all flex items-center gap-1.5"
-                        >
-                          <Check className="w-3.5 h-3.5" />
-                          <span>Approve</span>
-                        </button>
+                      {q.status === 'Pending Approval' ? (
+                        <div className="flex items-center justify-center gap-2">
+                          <button
+                            onClick={() => {
+                              setReviewingQuote(q);
+                              setActionType('approve');
+                            }}
+                            className="px-3 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 font-bold hover:bg-emerald-500/20 transition-all flex items-center gap-1.5"
+                          >
+                            <Check className="w-3.5 h-3.5" />
+                            <span>Approve</span>
+                          </button>
 
-                        <button
-                          onClick={() => {
-                            setReviewingQuote(q);
-                            setActionType('revision');
-                          }}
-                          className="px-3 py-1.5 rounded-full bg-white/5 border border-white/10 text-[#F5F1EA] font-semibold hover:bg-white/10 transition-all flex items-center gap-1.5"
-                        >
-                          <RotateCcw className="w-3.5 h-3.5" />
-                          <span>Revise</span>
-                        </button>
+                          <button
+                            onClick={() => {
+                              setReviewingQuote(q);
+                              setActionType('revision');
+                            }}
+                            className="px-3 py-1.5 rounded-full bg-white/5 border border-white/10 text-[#F5F1EA] font-semibold hover:bg-white/10 transition-all flex items-center gap-1.5"
+                          >
+                            <RotateCcw className="w-3.5 h-3.5" />
+                            <span>Revise</span>
+                          </button>
 
-                        <button
-                          onClick={() => {
-                            setReviewingQuote(q);
-                            setActionType('reject');
-                          }}
-                          className="px-3 py-1.5 rounded-full bg-rose-500/10 border border-rose-500/20 text-rose-400 font-bold hover:bg-rose-500/20 transition-all flex items-center gap-1.5"
-                        >
-                          <XCircle className="w-3.5 h-3.5" />
-                          <span>Reject</span>
-                        </button>
-                      </div>
+                          <button
+                            onClick={() => {
+                              setReviewingQuote(q);
+                              setActionType('reject');
+                            }}
+                            className="px-3 py-1.5 rounded-full bg-rose-500/10 border border-rose-500/20 text-rose-400 font-bold hover:bg-rose-500/20 transition-all flex items-center gap-1.5"
+                          >
+                            <XCircle className="w-3.5 h-3.5" />
+                            <span>Reject</span>
+                          </button>
+                        </div>
+                      ) : q.status === 'Approved' ? (
+                        <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 font-bold text-xs">
+                          <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                          <span>Approved</span>
+                        </div>
+                      ) : q.status === 'Rejected' ? (
+                        <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-rose-500/10 border border-rose-500/20 text-rose-400 font-bold text-xs">
+                          <XCircle className="w-4 h-4 text-rose-400" />
+                          <span>Rejected</span>
+                        </div>
+                      ) : q.status === 'Under Negotiation' ? (
+                        <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-400 font-bold text-xs">
+                          <RotateCcw className="w-4 h-4 text-amber-400" />
+                          <span>Revision Requested</span>
+                        </div>
+                      ) : (
+                        <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 font-bold text-xs">
+                          <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                          <span>{q.status}</span>
+                        </div>
+                      )}
                     </td>
+
                   </tr>
                 );
               })}

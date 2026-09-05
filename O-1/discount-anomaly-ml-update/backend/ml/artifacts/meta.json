@@ -1,0 +1,24 @@
+{
+  "trained_at": "2026-09-05T12:16:04.696327Z",
+  "n_training_rows": 4000,
+  "n_real_rows_used": 0,
+  "data_source": "synthetic-bootstrap",
+  "contamination": 0.05,
+  "feature_names": [
+    "discount_percent",
+    "quantity_log",
+    "unit_price_log",
+    "line_value_log",
+    "line_margin_percent",
+    "tier_rank",
+    "discount_to_limit_ratio",
+    "cat_hardware",
+    "cat_services",
+    "cat_subscriptions"
+  ],
+  "if_score_p01": -0.07628263615884849,
+  "if_score_p99": 0.16610661343094724,
+  "lof_score_p01": -0.14034430423091462,
+  "lof_score_p99": 0.23364130957848714,
+  "model_version": "discount-anomaly-v1"
+}

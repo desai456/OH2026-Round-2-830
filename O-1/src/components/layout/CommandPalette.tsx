@@ -51,6 +51,23 @@ export function CommandPalette({ isOpen, onClose }: CommandPaletteProps) {
     onClose();
   };
 
+  const handleSelectCustomer = (customerId: string) => {
+    const custQuote = quotes.find(q => q.customerId === customerId);
+    if (custQuote) {
+      setSelectedQuoteId(custQuote.id);
+      navigate(`/quotes/${custQuote.id}`);
+    } else {
+      const newQ = createQuote(customerId);
+      navigate(`/quotes/${newQ.id}`);
+    }
+    onClose();
+  };
+
+  const handleSelectProduct = (productId: string) => {
+    navigate(`/products/${productId}`);
+    onClose();
+  };
+
   const handleCreateNewQuote = () => {
     const q = createQuote(CUSTOMERS[0].id);
     navigate(`/quotes/${q.id}`);
@@ -121,7 +138,7 @@ export function CommandPalette({ isOpen, onClose }: CommandPaletteProps) {
                 <button
                   key={q.id}
                   onClick={() => handleSelectQuote(q.id)}
-                  className="w-full flex items-center justify-between px-3 py-2 text-sm font-medium text-[#F5F1EA] hover:bg-white/5 rounded-xl transition-colors"
+                  className="w-full flex items-center justify-between px-3 py-2 text-sm font-medium text-[#F5F1EA] hover:bg-white/5 rounded-xl transition-colors text-left"
                 >
                   <div className="flex items-center gap-3">
                     <FileText className="w-4 h-4 text-[#A6A39C]" />
@@ -143,16 +160,17 @@ export function CommandPalette({ isOpen, onClose }: CommandPaletteProps) {
                 Customers ({filteredCustomers.length})
               </span>
               {filteredCustomers.map(c => (
-                <div
+                <button
                   key={c.id}
-                  className="flex items-center justify-between px-3 py-2 text-sm font-medium text-[#F5F1EA] hover:bg-white/5 rounded-xl transition-colors cursor-pointer"
+                  onClick={() => handleSelectCustomer(c.id)}
+                  className="w-full flex items-center justify-between px-3 py-2 text-sm font-medium text-[#F5F1EA] hover:bg-white/5 rounded-xl transition-colors cursor-pointer text-left"
                 >
                   <div className="flex items-center gap-3">
                     <Users className="w-4 h-4 text-[#A6A39C]" />
                     <span>{c.name}</span>
                   </div>
                   <span className="text-xs text-amber-400 font-semibold">{c.tier} Tier</span>
-                </div>
+                </button>
               ))}
             </div>
           )}
@@ -164,9 +182,10 @@ export function CommandPalette({ isOpen, onClose }: CommandPaletteProps) {
                 Products ({filteredProducts.length})
               </span>
               {filteredProducts.map(p => (
-                <div
+                <button
                   key={p.id}
-                  className="flex items-center justify-between px-3 py-2 text-sm font-medium text-[#F5F1EA] hover:bg-white/5 rounded-xl transition-colors cursor-pointer"
+                  onClick={() => handleSelectProduct(p.id)}
+                  className="w-full flex items-center justify-between px-3 py-2 text-sm font-medium text-[#F5F1EA] hover:bg-white/5 rounded-xl transition-colors cursor-pointer text-left"
                 >
                   <div className="flex items-center gap-3">
                     <Package className="w-4 h-4 text-[#A6A39C]" />
@@ -174,11 +193,12 @@ export function CommandPalette({ isOpen, onClose }: CommandPaletteProps) {
                     <span className="text-xs text-[#A6A39C]">({p.sku})</span>
                   </div>
                   <span className="text-xs font-medium text-[#F5F1EA]">${p.basePrice.toLocaleString()}</span>
-                </div>
+                </button>
               ))}
             </div>
           )}
         </div>
+
 
         {/* Footer */}
         <div className="bg-[#121214] px-4 py-2.5 border-t border-white/8 flex items-center justify-between text-xs text-[#A6A39C]">

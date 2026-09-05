@@ -21,6 +21,147 @@ export default function ReportsDashboard() {
     { name: 'Taylor Rep', revenue: 310000, avgDiscount: 7.0 },
   ];
 
+  const handleExportCSV = () => {
+    const rows = [
+      ['DEALFLOW360 EXECUTIVE REVENUE & GOVERNANCE REPORT'],
+      [`Generated: ${new Date().toLocaleString()}`],
+      [`Time Range: ${timeRange}`, `Region: ${region}`, `Rep Filter: ${repFilter}`, `Product Family: ${familyFilter}`],
+      [''],
+      ['--- KEY PERFORMANCE INDICATORS ---'],
+      ['Total Contract Revenue', '$1,240,000'],
+      ['Avg Blended Discount %', '7.2%'],
+      ['Deal Velocity', '4.2 Days'],
+      [''],
+      ['--- CATEGORY REVENUE BREAKDOWN ---'],
+      ['Product Category', 'Revenue ($)', 'Margin (%)'],
+      ...categoryData.map(c => [c.category, `$${c.revenue.toLocaleString()}`, `${c.margin}%`]),
+      [''],
+      ['--- SALES REP CONTRIBUTION ---'],
+      ['Sales Rep Name', 'Revenue ($)', 'Avg Discount (%)'],
+      ...repData.map(r => [r.name, `$${r.revenue.toLocaleString()}`, `${r.avgDiscount}%`]),
+    ];
+
+    const csvContent = 'data:text/csv;charset=utf-8,' + rows.map(e => e.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(',')).join('\n');
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement('a');
+    link.setAttribute('href', encodedUri);
+    link.setAttribute('download', `DealFlow360_Executive_Report_${timeRange.replace(/\s+/g, '_')}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const handleExportPDF = () => {
+    const printWindow = window.open('', '_blank');
+    if (!printWindow) return;
+
+    const htmlContent = `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <title>DealFlow360 Executive Report - ${timeRange}</title>
+          <style>
+            body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 40px; color: #111; background: #fff; }
+            .header { border-bottom: 3px solid #FF4A1C; padding-bottom: 15px; margin-bottom: 25px; display: flex; justify-content: space-between; align-items: center; }
+            .logo { font-size: 24px; font-weight: bold; color: #FF4A1C; letter-spacing: -0.5px; }
+            .title { font-size: 20px; font-weight: 700; color: #111; }
+            .meta { font-size: 12px; color: #666; margin-top: 5px; }
+            .kpi-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-bottom: 30px; }
+            .kpi-card { border: 1px solid #e2e8f0; border-radius: 10px; padding: 15px; background: #f8fafc; }
+            .kpi-title { font-size: 11px; text-transform: uppercase; color: #64748b; font-weight: 600; }
+            .kpi-value { font-size: 24px; font-weight: 800; color: #0f172a; margin-top: 5px; }
+            .section-title { font-size: 14px; text-transform: uppercase; font-weight: 700; color: #334155; margin-top: 25px; margin-bottom: 10px; border-bottom: 1px solid #cbd5e1; padding-bottom: 5px; }
+            table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+            th, td { padding: 10px 12px; text-align: left; font-size: 13px; border-bottom: 1px solid #e2e8f0; }
+            th { background-color: #f1f5f9; font-weight: 700; color: #334155; }
+            .footer { margin-top: 50px; font-size: 11px; color: #94a3b8; text-align: center; border-top: 1px solid #e2e8f0; padding-top: 15px; }
+          </style>
+        </head>
+        <body>
+          <div class="header">
+            <div>
+              <div class="logo">DEALFLOW 360</div>
+              <div class="meta">Executive Revenue & Governance Report</div>
+            </div>
+            <div style="text-align: right;">
+              <div class="title">${timeRange} Performance</div>
+              <div class="meta">Filter: ${region} | ${repFilter} | ${familyFilter}</div>
+              <div class="meta">Generated: ${new Date().toLocaleDateString()}</div>
+            </div>
+          </div>
+
+          <div class="kpi-grid">
+            <div class="kpi-card">
+              <div class="kpi-title">Total Contract Revenue</div>
+              <div class="kpi-value">$1,240,000</div>
+            </div>
+            <div class="kpi-card">
+              <div class="kpi-title">Avg Blended Discount %</div>
+              <div class="kpi-value" style="color: #10b981;">7.2%</div>
+            </div>
+            <div class="kpi-card">
+              <div class="kpi-title">Deal Velocity</div>
+              <div class="kpi-value" style="color: #06b6d4;">4.2 Days</div>
+            </div>
+          </div>
+
+          <div class="section-title">Category Revenue Breakdown</div>
+          <table>
+            <thead>
+              <tr>
+                <th>Product Category</th>
+                <th style="text-align: right;">Revenue</th>
+                <th style="text-align: right;">Margin %</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${categoryData.map(c => `
+                <tr>
+                  <td>${c.category}</td>
+                  <td style="text-align: right; font-weight: 600;">$${c.revenue.toLocaleString()}</td>
+                  <td style="text-align: right;">${c.margin}%</td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+
+          <div class="section-title">Sales Rep Performance Contribution</div>
+          <table>
+            <thead>
+              <tr>
+                <th>Sales Representative</th>
+                <th style="text-align: right;">Revenue Generated</th>
+                <th style="text-align: right;">Avg Discount Given</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${repData.map(r => `
+                <tr>
+                  <td>${r.name}</td>
+                  <td style="text-align: right; font-weight: 600;">$${r.revenue.toLocaleString()}</td>
+                  <td style="text-align: right;">${r.avgDiscount}%</td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+
+          <div class="footer">
+            DealFlow360 Governance & Sales Operations Platform • Confidential & Proprietary
+          </div>
+
+          <script>
+            window.onload = function() {
+              window.print();
+            };
+          </script>
+        </body>
+      </html>
+    `;
+
+    printWindow.document.write(htmlContent);
+    printWindow.document.close();
+  };
+
   return (
     <div className="space-y-6 max-w-7xl mx-auto">
       {/* Top Header */}
@@ -39,16 +180,23 @@ export default function ReportsDashboard() {
         </div>
 
         <div className="flex items-center gap-3">
-          <button className="px-4 py-2 rounded-full border border-white/10 text-xs font-semibold text-[#F5F1EA] hover:bg-white/5 transition-all flex items-center gap-2">
+          <button
+            onClick={handleExportCSV}
+            className="px-4 py-2 rounded-full border border-white/10 text-xs font-semibold text-[#F5F1EA] hover:bg-white/5 transition-all flex items-center gap-2 cursor-pointer"
+          >
             <Download className="w-4 h-4 text-[#A6A39C]" />
             <span>Export CSV</span>
           </button>
-          <button className="px-5 py-2 text-xs font-bold rounded-full bg-[#F5F1EA] text-[#0A0A0B] hover:bg-white transition-all flex items-center gap-2 shadow-sm">
+          <button
+            onClick={handleExportPDF}
+            className="px-5 py-2 text-xs font-bold rounded-full bg-[#F5F1EA] text-[#0A0A0B] hover:bg-white transition-all flex items-center gap-2 shadow-sm cursor-pointer"
+          >
             <Download className="w-4 h-4" />
             <span>Export PDF Report</span>
           </button>
         </div>
       </div>
+
 
       {/* 4-Select Filter Bar */}
       <div className="bg-[#151517] border border-white/8 rounded-[20px] p-6 space-y-4">

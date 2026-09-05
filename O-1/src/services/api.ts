@@ -27,7 +27,9 @@ export async function fetchFromAPI(endpoint: string, options: RequestInit = {}) 
 export const api = {
   // Auth
   login: (data: any) => fetchFromAPI('/auth/login', { method: 'POST', body: JSON.stringify(data) }),
+  signup: (data: any) => fetchFromAPI('/auth/signup', { method: 'POST', body: JSON.stringify(data) }),
   getCurrentUser: () => fetchFromAPI('/auth/me'),
+
 
   // Products
   getProducts: (category?: string) => fetchFromAPI(`/products${category ? `?category=${category}` : ''}`),

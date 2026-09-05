@@ -19,6 +19,23 @@ class User(Base):
     company_name = Column(String(255))
     created_at = Column(DateTime, default=datetime.datetime.utcnow)
 
+class Customer(Base):
+    __tablename__ = "customers"
+
+    id = Column(String(50), primary_key=True)
+    name = Column(String(255), nullable=False)
+    tier = Column(String(50), nullable=False, default="Gold") # 'Bronze', 'Silver', 'Gold'
+    email = Column(String(255))
+    created_at = Column(DateTime, default=datetime.datetime.utcnow)
+
+class ProductCategory(Base):
+    __tablename__ = "product_categories"
+
+    id = Column(String(50), primary_key=True)
+    name = Column(String(255), nullable=False)
+    default_margin_pct = Column(Numeric(5, 2), default=30.00)
+    max_discount_limit_pct = Column(Numeric(5, 2), default=15.00)
+
 class Product(Base):
     __tablename__ = "products"
 
@@ -34,6 +51,15 @@ class Product(Base):
     promoted = Column(Boolean, default=False)
     image_url = Column(Text)
     created_at = Column(DateTime, default=datetime.datetime.utcnow)
+
+class DiscountTierRule(Base):
+    __tablename__ = "discount_tier_rules"
+
+    id = Column(String(50), primary_key=True)
+    customer_tier = Column(String(50), nullable=False) # 'Bronze', 'Silver', 'Gold'
+    product_category_id = Column(String(50), nullable=True)
+    category_name = Column(String(100), nullable=True) # Fallback / direct name match
+    max_allowed_discount_pct = Column(Numeric(5, 2), nullable=False)
 
 class DiscountTier(Base):
     __tablename__ = "discount_tiers"
@@ -62,6 +88,10 @@ class Inventory(Base):
     quantity_reserved = Column(Integer, default=0)
     reorder_level = Column(Integer, default=10)
 
+    @property
+    def available_qty(self):
+        return max(0, (self.quantity_on_hand or 0) - (self.quantity_reserved or 0))
+
 class SubscriptionPlan(Base):
     __tablename__ = "subscription_plans"
 
@@ -78,12 +108,14 @@ class Quotation(Base):
 
     id = Column(String(50), primary_key=True)
     quote_number = Column(String(50), unique=True, nullable=False)
+    customer_id = Column(String(50), nullable=True)
     customer_name = Column(String(255), nullable=False)
     customer_tier = Column(String(50), default="Gold")
     rep_name = Column(String(255), nullable=False)
-    status = Column(String(50), default="Draft") # 'Draft', 'Pending Approval', 'Approved', 'Rejected', 'Under Negotiation', 'Confirmed'
-    blended_risk_score = Column(Integer, default=0)
+    status = Column(String(50), default="Draft") # 'Draft', 'Pending Approval', 'Approved', 'Rejected', 'FULFILLMENT', 'PENDING_MANAGER_APPROVAL', 'PENDING_FINANCE_APPROVAL'
+    blended_risk_score = Column(Numeric(5, 2), default=0.0)
     approval_required = Column(String(100), default="None")
+    escalate_to_finance = Column(Boolean, default=False)
     subtotal = Column(Numeric(12, 2), default=0.00)
     total_discount = Column(Numeric(12, 2), default=0.00)
     total_tax = Column(Numeric(12, 2), default=0.00)
@@ -104,6 +136,7 @@ class QuoteItem(Base):
     quotation_id = Column(String(50), ForeignKey("quotations.id", ondelete="CASCADE"))
     product_id = Column(String(50), ForeignKey("products.id"))
     product_name = Column(String(255), nullable=False)
+    product_category_id = Column(String(50), nullable=True)
     category = Column(String(100), nullable=False)
     quantity = Column(Integer, default=1)
     unit_price = Column(Numeric(12, 2), nullable=False)
@@ -115,6 +148,17 @@ class QuoteItem(Base):
     billing_cycle = Column(String(50))
 
     quotation = relationship("Quotation", back_populates="items")
+
+    @property
+    def applied_discount_pct(self):
+        return float(self.discount_percent or 0.0)
+
+    @applied_discount_pct.setter
+    def applied_discount_pct(self, val):
+        self.discount_percent = val
+
+# Alias QuotationLine to QuoteItem for standard compliance
+QuotationLine = QuoteItem
 
 class ApprovalRecord(Base):
     __tablename__ = "approval_records"
@@ -129,10 +173,24 @@ class ApprovalRecord(Base):
 
     quotation = relationship("Quotation", back_populates="approvals")
 
+class FulfillmentOrder(Base):
+    __tablename__ = "fulfillment_orders"
+
+    id = Column(String(50), primary_key=True)
+    quotation_id = Column(String(50), ForeignKey("quotations.id", ondelete="CASCADE"), nullable=False)
+    status = Column(String(50), default="PENDING") # 'PENDING', 'PARTIAL', 'FULFILLED'
+    total_shipments = Column(Integer, default=1)
+    total_shipping_cost = Column(Numeric(12, 2), default=0.00)
+    created_at = Column(DateTime, default=datetime.datetime.utcnow)
+
+    splits = relationship("FulfillmentSplit", back_populates="fulfillment_order", cascade="all, delete-orphan")
+    backorders = relationship("Backorder", back_populates="fulfillment_order", cascade="all, delete-orphan")
+
 class FulfillmentSplit(Base):
     __tablename__ = "fulfillment_splits"
 
     id = Column(String(50), primary_key=True)
+    fulfillment_order_id = Column(String(50), ForeignKey("fulfillment_orders.id", ondelete="CASCADE"), nullable=True)
     quotation_id = Column(String(50), ForeignKey("quotations.id", ondelete="CASCADE"))
     warehouse_id = Column(String(50), ForeignKey("warehouses.id"))
     warehouse_name = Column(String(255), nullable=False)
@@ -143,18 +201,120 @@ class FulfillmentSplit(Base):
     shipping_cost = Column(Numeric(12, 2), default=0.00)
     status = Column(String(50), default="Allocated")
 
+    fulfillment_order = relationship("FulfillmentOrder", back_populates="splits")
+
+    @property
+    def allocated_qty(self):
+        return int(self.quantity_fulfilled or 0)
+
+    @allocated_qty.setter
+    def allocated_qty(self, val):
+        self.quantity_fulfilled = val
+
+class Backorder(Base):
+    __tablename__ = "backorders"
+
+    id = Column(String(50), primary_key=True)
+    quotation_id = Column(String(50), ForeignKey("quotations.id", ondelete="CASCADE"), nullable=False)
+    fulfillment_order_id = Column(String(50), ForeignKey("fulfillment_orders.id", ondelete="SET NULL"), nullable=True)
+    product_id = Column(String(50), ForeignKey("products.id"), nullable=False)
+    product_name = Column(String(255), nullable=True)
+    missing_qty = Column(Integer, nullable=False)
+    status = Column(String(50), default="WAITING") # 'WAITING', 'CONSOLIDATED', 'CANCELLED'
+    created_at = Column(DateTime, default=datetime.datetime.utcnow)
+
+    fulfillment_order = relationship("FulfillmentOrder", back_populates="backorders")
+
+
 class Invoice(Base):
     __tablename__ = "invoices"
 
     id = Column(String(50), primary_key=True)
     invoice_number = Column(String(50), unique=True, nullable=False)
-    quotation_id = Column(String(50), ForeignKey("quotations.id", ondelete="CASCADE"))
+    order_id = Column(String(50), ForeignKey("orders.id", ondelete="SET NULL"), nullable=True)
+    quotation_id = Column(String(50), ForeignKey("quotations.id", ondelete="CASCADE"), nullable=True)
     customer_name = Column(String(255), nullable=False)
-    billing_type = Column(String(100), nullable=False)
+    billing_type = Column(String(100), nullable=False, default="Initial")
+    type = Column(String(50), default="INITIAL") # 'INITIAL', 'RECURRING', 'PRORATED', 'REFUND', 'ONE_TIME'
     amount = Column(Numeric(12, 2), nullable=False)
     due_date = Column(Date, nullable=False)
     status = Column(String(50), default="Unpaid")
     created_at = Column(DateTime, default=datetime.datetime.utcnow)
+
+    order = relationship("Order", back_populates="invoices")
+
+    @property
+    def total_amount(self):
+        return float(self.amount or 0.0)
+
+    @total_amount.setter
+    def total_amount(self, val):
+        self.amount = val
+
+class Order(Base):
+    __tablename__ = "orders"
+
+    id = Column(String(50), primary_key=True)
+    quotation_id = Column(String(50), ForeignKey("quotations.id", ondelete="SET NULL"), nullable=True)
+    order_number = Column(String(50), unique=True, nullable=False)
+    customer_name = Column(String(255), nullable=False)
+    customer_tier = Column(String(50), default="Gold")
+    total_amount = Column(Numeric(12, 2), default=0.00)
+    status = Column(String(50), default="CONFIRMED") # 'CONFIRMED', 'ACTIVE', 'COMPLETED'
+    created_at = Column(DateTime, default=datetime.datetime.utcnow)
+
+    lines = relationship("OrderLine", back_populates="order", cascade="all, delete-orphan")
+    schedules = relationship("BillingSchedule", back_populates="order", cascade="all, delete-orphan")
+    invoices = relationship("Invoice", back_populates="order")
+    credit_notes = relationship("CreditNote", back_populates="order", cascade="all, delete-orphan")
+
+class OrderLine(Base):
+    __tablename__ = "order_lines"
+
+    id = Column(String(50), primary_key=True)
+    order_id = Column(String(50), ForeignKey("orders.id", ondelete="CASCADE"), nullable=False)
+    product_id = Column(String(50), ForeignKey("products.id"), nullable=True)
+    product_name = Column(String(255), nullable=False)
+    line_type = Column(String(50), nullable=False, default="ONE_TIME") # 'ONE_TIME', 'RECURRING'
+    unit_price = Column(Numeric(12, 2), nullable=False)
+    quantity = Column(Integer, default=1)
+    applied_discount_pct = Column(Numeric(5, 2), default=0.00)
+    subscription_plan_id = Column(String(50), ForeignKey("subscription_plans.id", ondelete="SET NULL"), nullable=True)
+    billing_cycle = Column(String(50), default="MONTHLY") # 'MONTHLY', 'QUARTERLY', 'YEARLY'
+    cycle_start_date = Column(Date, nullable=True)
+    cycle_end_date = Column(Date, nullable=True)
+    status = Column(String(50), default="ACTIVE") # 'ACTIVE', 'MODIFIED', 'CANCELLED'
+    created_at = Column(DateTime, default=datetime.datetime.utcnow)
+
+    order = relationship("Order", back_populates="lines")
+    subscription_plan = relationship("SubscriptionPlan")
+    schedules = relationship("BillingSchedule", back_populates="order_line", cascade="all, delete-orphan")
+
+class BillingSchedule(Base):
+    __tablename__ = "billing_schedules"
+
+    id = Column(String(50), primary_key=True)
+    order_id = Column(String(50), ForeignKey("orders.id", ondelete="CASCADE"), nullable=False)
+    order_line_id = Column(String(50), ForeignKey("order_lines.id", ondelete="CASCADE"), nullable=False)
+    next_billing_date = Column(Date, nullable=False)
+    amount_due = Column(Numeric(12, 2), nullable=False)
+    status = Column(String(50), default="SCHEDULED") # 'SCHEDULED', 'BILLED', 'CANCELLED'
+    created_at = Column(DateTime, default=datetime.datetime.utcnow)
+
+    order = relationship("Order", back_populates="schedules")
+    order_line = relationship("OrderLine", back_populates="schedules")
+
+class CreditNote(Base):
+    __tablename__ = "credit_notes"
+
+    id = Column(String(50), primary_key=True)
+    order_id = Column(String(50), ForeignKey("orders.id", ondelete="CASCADE"), nullable=False)
+    order_line_id = Column(String(50), ForeignKey("order_lines.id", ondelete="SET NULL"), nullable=True)
+    amount = Column(Numeric(12, 2), nullable=False)
+    reason = Column(Text, nullable=False)
+    created_at = Column(DateTime, default=datetime.datetime.utcnow)
+
+    order = relationship("Order", back_populates="credit_notes")
 
 class CustomerNegotiation(Base):
     __tablename__ = "customer_negotiations"
@@ -183,9 +343,17 @@ class AuditLog(Base):
     __tablename__ = "audit_logs"
 
     id = Column(String(50), primary_key=True)
-    entity_type = Column(String(100), nullable=False)
-    entity_id = Column(String(50), nullable=False)
-    action = Column(String(255), nullable=False)
-    performed_by = Column(String(255), nullable=False)
-    details = Column(Text)
+    quotation_id = Column(String(50), nullable=True)
+    user_id = Column(String(50), nullable=True)
+    action = Column(String(255), nullable=False) # 'SUBMIT', 'APPROVE', 'REJECT', 'COUNTER', etc.
+    previous_stage = Column(String(100), nullable=True)
+    new_stage = Column(String(100), nullable=True)
+    rationale_note = Column(Text, nullable=True)
+    entity_type = Column(String(100), nullable=True, default="Quotation")
+    entity_id = Column(String(50), nullable=True)
+    performed_by = Column(String(255), nullable=True)
+    details = Column(Text, nullable=True)
+    created_at = Column(DateTime, default=datetime.datetime.utcnow)
     timestamp = Column(DateTime, default=datetime.datetime.utcnow)
+
+

@@ -262,6 +262,16 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   };
 
   const approveQuote = (quoteId: string, comment?: string) => {
+    // Persist action to PostgreSQL Database
+    const stepName = currentUser.role === 'Finance' ? 'Finance' : 'Sales Manager';
+    api.actOnApproval({
+      quotation_id: quoteId,
+      step: stepName,
+      status: 'Approved',
+      approver_name: currentUser.name,
+      comments: comment || `Approved by ${currentUser.role}`,
+    }).catch(err => console.error('[AppContext] Backend approval sync error:', err));
+
     setQuotes(prev =>
       prev.map(q => {
         if (q.id !== quoteId) return q;
@@ -314,6 +324,16 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   };
 
   const rejectQuote = (quoteId: string, reason: string) => {
+    // Persist action to PostgreSQL Database
+    const stepName = currentUser.role === 'Finance' ? 'Finance' : 'Sales Manager';
+    api.actOnApproval({
+      quotation_id: quoteId,
+      step: stepName,
+      status: 'Rejected',
+      approver_name: currentUser.name,
+      comments: reason,
+    }).catch(err => console.error('[AppContext] Backend rejection sync error:', err));
+
     setQuotes(prev =>
       prev.map(q => {
         if (q.id !== quoteId) return q;
@@ -349,6 +369,16 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   };
 
   const requestRevision = (quoteId: string, note: string) => {
+    // Persist action to PostgreSQL Database
+    const stepName = currentUser.role === 'Finance' ? 'Finance' : 'Sales Manager';
+    api.actOnApproval({
+      quotation_id: quoteId,
+      step: stepName,
+      status: 'Rejected',
+      approver_name: currentUser.name,
+      comments: `Revision requested: ${note}`,
+    }).catch(err => console.error('[AppContext] Backend revision sync error:', err));
+
     setQuotes(prev =>
       prev.map(q => {
         if (q.id !== quoteId) return q;
@@ -382,6 +412,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       message: 'Returned quotation to rep for price adjustment.',
     });
   };
+
 
   const submitCustomerCounterOffer = (quoteId: string, requestedDiscountPercent: number, reason: string) => {
     setQuotes(prev =>

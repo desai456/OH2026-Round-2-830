@@ -6,6 +6,14 @@ class UserLogin(BaseModel):
     email: str
     password: str
 
+class UserSignup(BaseModel):
+    full_name: str
+    email: str
+    password: str
+    role: str = "Sales Rep"
+    customer_tier: Optional[str] = "Gold"
+    company_name: Optional[str] = None
+
 class UserResponse(BaseModel):
     id: str
     email: str
@@ -13,6 +21,7 @@ class UserResponse(BaseModel):
     role: str
     customer_tier: Optional[str] = "Gold"
     company_name: Optional[str] = None
+
 
 class ProductCreate(BaseModel):
     sku: str
