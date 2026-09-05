@@ -68,141 +68,145 @@ export function AppLayout() {
       <CommandPalette isOpen={isCommandOpen} onClose={() => setIsCommandOpen(false)} />
 
       {/* TOP NAVIGATION CHROME (<AppShell> Bar per Wireframe Spec) */}
-      <header className="h-14 px-4 sm:px-6 bg-[#0F172A] text-white border-b border-[#1E293B] flex items-center justify-between sticky top-0 z-40 shadow-sm">
-        {/* Brand Logo & Mobile Trigger */}
-        <div className="flex items-center gap-3 shrink-0">
-          <button
-            onClick={() => setIsMobileOpen(!isMobileOpen)}
-            className="lg:hidden p-1.5 rounded-lg text-[#94A3B8] hover:text-white hover:bg-[#172033]"
-          >
-            {isMobileOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
-          </button>
-
-          <div
-            onClick={() => navigate('/dashboard')}
-            className="flex items-center gap-2.5 cursor-pointer group"
-          >
-            <div className="w-8 h-8 rounded-lg bg-[#4F46E5] text-white font-black tracking-wider text-sm flex items-center justify-center shadow-md">
-              DF
-            </div>
-            <span className="font-extrabold text-sm tracking-tight text-white hidden sm:flex items-center gap-1.5">
-              DEALFLOW360
-              <span className="text-[9px] font-bold px-1.5 py-0.2 rounded bg-indigo-950 text-indigo-300 border border-indigo-800">
-                CPQ
-              </span>
-            </span>
-          </div>
-        </div>
-
-        {/* Center-Left 9 Nav Links (Single-Row Dense Pill/Tab Style) */}
-        <nav className="hidden lg:flex items-center gap-1 overflow-x-auto py-1 mx-4">
-          {navItems.map(item => {
-            const Icon = item.icon;
-            const isActive = location.pathname.startsWith(item.path);
-
-            return (
-              <NavLink
-                key={item.path}
-                to={item.path}
-                className={`px-3 py-1.5 rounded-lg text-xs font-semibold tracking-tight transition-all flex items-center gap-1.5 shrink-0 ${
-                  isActive
-                    ? 'bg-[#4F46E5] text-white shadow-2xs font-bold ring-1 ring-indigo-400/30'
-                    : 'text-[#CBD5E1] hover:bg-[#172033] hover:text-white'
-                }`}
-              >
-                <Icon className={`w-3.5 h-3.5 ${isActive ? 'text-white' : 'text-[#94A3B8]'}`} />
-                <span>{item.name}</span>
-              </NavLink>
-            );
-          })}
-        </nav>
-
-        {/* Far-Right: Search + Role Switcher + Notifications + Theme */}
-        <div className="flex items-center gap-2.5 shrink-0">
-          {/* Global Search Button */}
-          <button
-            onClick={() => setIsCommandOpen(true)}
-            className="flex items-center gap-2 px-2.5 py-1 bg-[#172033] hover:bg-slate-800 text-[#CBD5E1] rounded-lg text-xs font-medium border border-[#1E293B] transition-colors"
-          >
-            <Search className="w-3.5 h-3.5 text-[#94A3B8]" />
-            <span className="hidden sm:inline">Search...</span>
-            <kbd className="hidden sm:inline px-1.5 py-0.2 bg-[#0F172A] rounded border border-[#1E293B] text-[9px] font-mono text-[#94A3B8]">
-              ⌘K
-            </kbd>
-          </button>
-
-          {/* Notifications Popover */}
-          <div className="relative">
+      <header className="sticky top-0 z-40 bg-[#0B0F19]/95 backdrop-blur-md text-white border-b border-slate-800/80 shadow-md">
+        <div className="h-14 px-4 sm:px-6 flex items-center justify-between">
+          {/* Brand Logo & Mobile Trigger */}
+          <div className="flex items-center gap-3 shrink-0">
             <button
-              onClick={() => setIsNotificationsOpen(!isNotificationsOpen)}
-              className="p-1.5 rounded-lg text-[#94A3B8] hover:text-white hover:bg-[#172033] transition-colors relative"
+              onClick={() => setIsMobileOpen(!isMobileOpen)}
+              className="lg:hidden p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800/80 transition-colors"
             >
-              <Bell className="w-4 h-4" />
-              <span className="absolute top-1 right-1 w-2 h-2 rounded-full bg-[#4F46E5] ring-2 ring-[#0F172A]" />
+              {isMobileOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
             </button>
 
-            {isNotificationsOpen && (
-              <div className="absolute right-0 mt-2 w-80 bg-white dark:bg-slate-900 border border-[#E2E8F0] dark:border-slate-800 rounded-xl shadow-xl p-4 z-50 animate-in fade-in duration-150 text-slate-900 dark:text-slate-100">
-                <div className="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-slate-800">
-                  <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400">Notifications</h4>
-                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-700">2 New</span>
-                </div>
-                <div className="space-y-2.5 mt-3 text-xs">
-                  <div className="p-2.5 rounded-lg bg-amber-50 dark:bg-amber-950/40 border border-amber-200 text-amber-900 dark:text-amber-200">
-                    <div className="font-bold">Approval Required (Q-1042)</div>
-                    <div className="text-[11px] text-amber-700 dark:text-amber-400 mt-0.5">Setup Service discount of 18% exceeds category limit.</div>
+            <div
+              onClick={() => navigate('/dashboard')}
+              className="flex items-center gap-2.5 cursor-pointer group"
+            >
+              <div className="w-7 h-7 rounded-lg bg-gradient-to-tr from-indigo-600 to-indigo-500 text-white font-black tracking-wider text-xs flex items-center justify-center shadow-md shadow-indigo-500/20 border border-indigo-400/30 group-hover:scale-105 transition-transform">
+                DF
+              </div>
+              <span className="font-extrabold text-sm tracking-tight text-white hidden sm:flex items-center gap-1.5">
+                <span>DEALFLOW</span>
+                <span className="text-indigo-400 font-black">360</span>
+                <span className="text-[9px] font-mono tracking-wider px-1.5 py-0.5 rounded-full bg-indigo-500/10 text-indigo-300 border border-indigo-500/30 font-bold uppercase">
+                  CPQ
+                </span>
+              </span>
+            </div>
+          </div>
+
+          {/* Center-Left 9 Nav Links (Dense Single-Row Pill Navigation) */}
+          <nav className="hidden lg:flex items-center gap-1 overflow-x-auto py-1 mx-4">
+            {navItems.map(item => {
+              const Icon = item.icon;
+              const isActive = location.pathname.startsWith(item.path);
+
+              return (
+                <NavLink
+                  key={item.path}
+                  to={item.path}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold tracking-tight transition-all flex items-center gap-1.5 shrink-0 ${
+                    isActive
+                      ? 'bg-indigo-600 text-white font-bold shadow-sm shadow-indigo-500/30 border border-indigo-400/30'
+                      : 'text-slate-300 hover:text-white hover:bg-slate-800/60'
+                  }`}
+                >
+                  <Icon className={`w-3.5 h-3.5 ${isActive ? 'text-white' : 'text-slate-400'}`} />
+                  <span>{item.name}</span>
+                </NavLink>
+              );
+            })}
+          </nav>
+
+          {/* Far-Right: Search + Role Switcher + Notifications + Theme */}
+          <div className="flex items-center gap-2.5 shrink-0">
+            {/* Global Search Button */}
+            <button
+              onClick={() => setIsCommandOpen(true)}
+              className="flex items-center gap-2 px-3 py-1.5 bg-[#141A29] hover:bg-slate-800 text-slate-300 rounded-lg text-xs font-medium border border-slate-800 transition-colors shadow-2xs"
+            >
+              <Search className="w-3.5 h-3.5 text-slate-400" />
+              <span className="hidden sm:inline">Search...</span>
+              <kbd className="hidden sm:inline px-1.5 py-0.2 bg-[#0B0F19] rounded border border-slate-800 text-[9px] font-mono text-slate-400">
+                ⌘K
+              </kbd>
+            </button>
+
+            {/* Notifications Popover */}
+            <div className="relative">
+              <button
+                onClick={() => setIsNotificationsOpen(!isNotificationsOpen)}
+                className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800/80 transition-colors relative"
+              >
+                <Bell className="w-4 h-4" />
+                <span className="absolute top-1 right-1 w-2 h-2 rounded-full bg-indigo-500 ring-2 ring-[#0B0F19]" />
+              </button>
+
+              {isNotificationsOpen && (
+                <div className="absolute right-0 mt-2 w-80 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-xl p-4 z-50 animate-in fade-in duration-150 text-slate-900 dark:text-slate-100">
+                  <div className="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-slate-800">
+                    <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400">Notifications</h4>
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-indigo-50 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300">2 New</span>
+                  </div>
+                  <div className="space-y-2.5 mt-3 text-xs">
+                    <div className="p-2.5 rounded-lg bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-900/60 text-amber-900 dark:text-amber-200">
+                      <div className="font-bold">Approval Required (Q-1042)</div>
+                      <div className="text-[11px] text-amber-700 dark:text-amber-400 mt-0.5">Setup Service discount of 18% exceeds category limit.</div>
+                    </div>
                   </div>
                 </div>
-              </div>
-            )}
-          </div>
+              )}
+            </div>
 
-          {/* Dark Mode Toggle */}
-          <button
-            onClick={toggleTheme}
-            className="p-1.5 rounded-lg text-[#94A3B8] hover:text-white hover:bg-[#172033] transition-colors"
-          >
-            {theme === 'dark' ? <Sun className="w-4 h-4 text-amber-400" /> : <Moon className="w-4 h-4 text-[#CBD5E1]" />}
-          </button>
-
-          {/* Role Switcher Pill Badge */}
-          <div className="relative">
+            {/* Dark Mode Toggle */}
             <button
-              onClick={() => setIsRoleMenuOpen(!isRoleMenuOpen)}
-              className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#EEF2FF] dark:bg-indigo-950/80 text-[#4338CA] dark:text-indigo-300 border border-[#C7D2FE] dark:border-indigo-800 text-xs font-bold hover:bg-indigo-100 transition-colors"
+              onClick={toggleTheme}
+              className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800/80 transition-colors"
             >
-              <UserCheck className="w-3.5 h-3.5" />
-              <span>{currentUser.role}</span>
-              <ChevronDown className="w-3 h-3 text-[#4338CA]" />
+              {theme === 'dark' ? <Sun className="w-4 h-4 text-amber-400" /> : <Moon className="w-4 h-4 text-slate-300" />}
             </button>
 
-            {isRoleMenuOpen && (
-              <div className="absolute right-0 mt-2 w-48 bg-[#0F172A] border border-[#1E293B] rounded-xl shadow-xl p-2 z-50 animate-in fade-in duration-150">
-                <span className="text-[10px] font-bold text-[#94A3B8] uppercase tracking-wider px-2 py-1 block">
-                  Switch Persona
-                </span>
-                <div className="space-y-0.5 mt-1">
-                  {demoRoles.map(role => (
-                    <button
-                      key={role}
-                      onClick={() => {
-                        if (role === 'Customer') navigate('/customer/portal');
-                        else switchRole(role);
-                        setIsRoleMenuOpen(false);
-                      }}
-                      className={`w-full flex items-center justify-between px-2.5 py-1.5 text-xs font-medium rounded-lg transition-colors ${
-                        currentUser.role === role
-                          ? 'bg-[#4F46E5] text-white font-bold'
-                          : 'text-[#CBD5E1] hover:bg-[#172033]'
-                      }`}
-                    >
-                      <span>{role}</span>
-                      {currentUser.role === role && <UserCheck className="w-3.5 h-3.5 text-white" />}
-                    </button>
-                  ))}
+            {/* Role Switcher Pill Badge */}
+            <div className="relative">
+              <button
+                onClick={() => setIsRoleMenuOpen(!isRoleMenuOpen)}
+                className="flex items-center gap-2 px-3 py-1 rounded-full bg-[#141A29] hover:bg-slate-800 text-indigo-200 border border-indigo-500/30 text-xs font-bold transition-all"
+              >
+                <span className="w-2 h-2 rounded-full bg-emerald-400" />
+                <UserCheck className="w-3.5 h-3.5 text-indigo-400" />
+                <span>{currentUser.role}</span>
+                <ChevronDown className="w-3 h-3 text-indigo-400" />
+              </button>
+
+              {isRoleMenuOpen && (
+                <div className="absolute right-0 mt-2 w-48 bg-[#0B0F19] border border-slate-800 rounded-xl shadow-xl p-2 z-50 animate-in fade-in duration-150">
+                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider px-2 py-1 block">
+                    Switch Persona
+                  </span>
+                  <div className="space-y-0.5 mt-1">
+                    {demoRoles.map(role => (
+                      <button
+                        key={role}
+                        onClick={() => {
+                          if (role === 'Customer') navigate('/customer/portal');
+                          else switchRole(role);
+                          setIsRoleMenuOpen(false);
+                        }}
+                        className={`w-full flex items-center justify-between px-2.5 py-1.5 text-xs font-medium rounded-lg transition-colors ${
+                          currentUser.role === role
+                            ? 'bg-indigo-600 text-white font-bold'
+                            : 'text-slate-300 hover:bg-slate-800/80'
+                        }`}
+                      >
+                        <span>{role}</span>
+                        {currentUser.role === role && <UserCheck className="w-3.5 h-3.5 text-white" />}
+                      </button>
+                    ))}
+                  </div>
                 </div>
-              </div>
-            )}
+              )}
+            </div>
           </div>
         </div>
       </header>
