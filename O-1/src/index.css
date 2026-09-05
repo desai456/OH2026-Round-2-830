@@ -1,0 +1,74 @@
+@import "tailwindcss";
+@import "./styles/tokens.css";
+
+@layer base {
+  body {
+    background-color: #0A0A0B;
+    background-image: 
+      radial-gradient(circle 900px at 10% 20%, rgba(255, 74, 28, 0.18), transparent 60%),
+      radial-gradient(circle 700px at 85% 70%, rgba(255, 74, 28, 0.10), transparent 60%),
+      radial-gradient(circle 500px at 50% 10%, rgba(180, 20, 0, 0.08), transparent 50%);
+    background-attachment: fixed;
+    color: #F5F1EA;
+    font-family: 'Inter', sans-serif;
+    -webkit-font-smoothing: antialiased;
+    letter-spacing: -0.01em;
+    min-height: 100vh;
+  }
+
+  h1, h2, h3, .font-serif {
+    font-family: 'Fraunces', serif;
+    letter-spacing: -0.02em;
+  }
+
+  *:focus-visible {
+    outline: 2px solid var(--accent-500);
+    outline-offset: 2px;
+  }
+}
+
+/* Custom Contentium Utility Classes */
+.bg-page { background-color: transparent; }
+.bg-card { background-color: #151517; }
+.bg-card-raised { background-color: #1C1C1E; }
+.bg-pill { background-color: #1C1C1E; }
+
+.text-primary { color: #F5F1EA; }
+.text-secondary { color: #A6A39C; }
+.text-muted { color: #6E6C68; }
+.text-accent { color: #FF4A1C; }
+
+.border-subtle { border-color: rgba(255, 255, 255, 0.08); }
+.border-hover:hover { border-color: rgba(255, 255, 255, 0.16); }
+
+.accent-glow {
+  box-shadow: 0 4px 25px rgba(255, 74, 28, 0.25);
+}
+
+/* Hide scrollbar utility */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* Thin custom scrollbar for modal bodies and panels */
+.overflow-y-auto::-webkit-scrollbar,
+.overflow-y-scroll::-webkit-scrollbar {
+  width: 4px;
+}
+.overflow-y-auto::-webkit-scrollbar-track,
+.overflow-y-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+.overflow-y-auto::-webkit-scrollbar-thumb,
+.overflow-y-scroll::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.12);
+  border-radius: 99px;
+}
+.overflow-y-auto::-webkit-scrollbar-thumb:hover,
+.overflow-y-scroll::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 74, 28, 0.4);
+}

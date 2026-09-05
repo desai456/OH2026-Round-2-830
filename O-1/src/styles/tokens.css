@@ -1,0 +1,89 @@
+/* Contentium Dark SaaS Design Tokens with Red Radial Glow */
+
+:root {
+  /* Contentium Color System */
+  --bg-page: #0A0A0B;
+  --bg-section-alt: #0D0D0E;
+  --bg-card: #151517;
+  --bg-card-raised: #1C1C1E;
+  --bg-nav: rgba(10, 10, 11, 0.85);
+  --bg-pill: #1C1C1E;
+
+  --border-subtle: rgba(255, 255, 255, 0.08);
+  --border-hover: rgba(255, 255, 255, 0.16);
+  --border-focus: rgba(255, 74, 28, 0.5);
+
+  --text-primary: #F5F1EA;
+  --text-secondary: #A6A39C;
+  --text-muted: #6E6C68;
+  --text-on-light: #0A0A0B;
+
+  /* Signature Crimson / Orange-Red Accent */
+  --accent-500: #FF4A1C;
+  --accent-400: #FF7A45;
+  --accent-glow: rgba(255, 74, 28, 0.25);
+
+  /* Typography */
+  --font-serif: 'Fraunces', serif;
+  --font-sans: 'Inter', sans-serif;
+
+  /* Backward Compatibility Mappings */
+  --df-bg: var(--bg-page);
+  --df-surface: var(--bg-card);
+  --df-surface-subtle: var(--bg-card-raised);
+  --df-surface-muted: var(--bg-section-alt);
+  --df-text-primary: var(--text-primary);
+  --df-text-secondary: var(--text-secondary);
+  --df-text-muted: var(--text-muted);
+  --df-border: var(--border-subtle);
+  --df-border-strong: var(--border-hover);
+
+  --df-sidebar: #0A0A0B;
+  --df-sidebar-hover: #151517;
+  --df-sidebar-border: rgba(255, 255, 255, 0.08);
+  --df-sidebar-text: #A6A39C;
+  --df-sidebar-muted: #6E6C68;
+  --df-sidebar-active: #FF4A1C;
+
+  --df-primary: #FF4A1C;
+  --df-primary-hover: #FF7A45;
+  --df-primary-subtle: rgba(255, 74, 28, 0.15);
+  --df-primary-border: rgba(255, 74, 28, 0.3);
+  --df-primary-text: #F5F1EA;
+
+  --df-success: #10B981;
+  --df-success-hover: #059669;
+  --df-success-subtle: rgba(16, 185, 129, 0.15);
+  --df-success-border: rgba(16, 185, 129, 0.3);
+  --df-success-text: #34D399;
+
+  --df-warning: #F59E0B;
+  --df-warning-hover: #D97706;
+  --df-warning-subtle: rgba(245, 158, 11, 0.15);
+  --df-warning-border: rgba(245, 158, 11, 0.3);
+  --df-warning-text: #FBBF24;
+
+  --df-danger: #EF4444;
+  --df-danger-hover: #DC2626;
+  --df-danger-subtle: rgba(239, 68, 68, 0.15);
+  --df-danger-border: rgba(239, 68, 68, 0.3);
+  --df-danger-text: #F87171;
+
+  --df-info: #3B82F6;
+  --df-info-hover: #2563EB;
+  --df-info-subtle: rgba(59, 130, 246, 0.15);
+  --df-info-border: rgba(59, 130, 246, 0.3);
+  --df-info-text: #60A5FA;
+}
+
+.dark {
+  --df-bg: var(--bg-page);
+  --df-surface: var(--bg-card);
+  --df-surface-subtle: var(--bg-card-raised);
+  --df-surface-muted: var(--bg-section-alt);
+  --df-text-primary: var(--text-primary);
+  --df-text-secondary: var(--text-secondary);
+  --df-text-muted: var(--text-muted);
+  --df-border: var(--border-subtle);
+  --df-border-strong: var(--border-hover);
+}
