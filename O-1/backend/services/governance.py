@@ -303,12 +303,13 @@ def calculate_blended_risk_ml(items: list, customer_tier: str = "Gold") -> dict:
     combined_score = max(combined_score, rule_score)
     blended_risk_score = min(100, int(round(combined_score)))
 
-    if blended_risk_score == 0:
+    if blended_risk_score <= 0:
         approval_required = "None"
-    elif blended_risk_score <= 50:
+    elif blended_risk_score <= 5:
         approval_required = "Sales Manager"
     else:
         approval_required = "Sales Manager & Finance"
+
 
     return {
         "blended_risk_score": blended_risk_score,

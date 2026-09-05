@@ -51,9 +51,118 @@ def list_quotations(status: str = None, db: Session = Depends(get_db)):
             "created_at": q.created_at.isoformat() if q.created_at else None,
             "updated_at": q.updated_at.isoformat() if q.updated_at else None
         })
-    return result
+@router.post("/", response_model=Dict[str, Any])
+@router.post("", response_model=Dict[str, Any])
+def create_quotation(payload: Dict[str, Any], db: Session = Depends(get_db)):
+    """
+    POST /api/quotations
+    Creates a new quotation, calculates pricing, blended risk score, and determines approval routing.
+    """
+    customer_name = payload.get("customer_name", "Acme Corp")
+    customer_tier = payload.get("customer_tier", "Gold")
+    rep_name = payload.get("rep_name", "Alex Morgan")
+    notes = payload.get("notes", "")
+
+    items_raw = payload.get("items", [])
+    if not items_raw:
+        raise HTTPException(status_code=400, detail="Quotation must contain at least one item")
+
+    pricing_payload = []
+    for it in items_raw:
+        disc = float(it.get("discount_pct", it.get("discount_percent", 0.0)))
+        pricing_payload.append({
+            "product_id": it.get("product_id"),
+            "product_name": it.get("product_name"),
+            "category": it.get("category", "Hardware"),
+            "quantity": int(it.get("quantity", 1)),
+            "unit_price": float(it.get("unit_price", 100.0)),
+            "cost_price": float(it.get("cost_price", 60.0)),
+            "discount_pct": disc,
+            "is_recurring": it.get("is_recurring", False),
+            "billing_cycle": it.get("billing_cycle", None)
+        })
+
+    pricing_engine = PricingEngine(db)
+    totals = pricing_engine.calculate_cart_totals(pricing_payload)
+
+    governance_result = calculate_blended_risk(pricing_payload, customer_tier)
+    risk_score = int(governance_result.get("blended_risk_score", 0))
+    approval_req = governance_result.get("approval_required", "None")
+
+    status = "Pending Approval" if approval_req != "None" else "Approved"
+
+    quote_id = f"q-{uuid.uuid4().hex[:6]}"
+    quote_num = f"QT-2026-{uuid.uuid4().hex[:4].upper()}"
+
+    new_quote = Quotation(
+        id=quote_id,
+        quote_number=quote_num,
+        customer_name=customer_name,
+        customer_tier=customer_tier,
+        rep_name=rep_name,
+        status=status,
+        blended_risk_score=risk_score,
+        approval_required=approval_req,
+        subtotal=totals["subtotal"],
+        total_discount=totals["total_discount"],
+        grand_total=totals["total_selling_price"],
+        total_cost=totals["total_cost"],
+        margin_percent=totals["blended_margin_pct"],
+        notes=notes,
+        created_at=datetime.datetime.utcnow(),
+        updated_at=datetime.datetime.utcnow()
+    )
+    db.add(new_quote)
+
+    for line in totals["lines"]:
+        db.add(QuoteItem(
+            id=f"qi-{uuid.uuid4().hex[:6]}",
+            quotation_id=quote_id,
+            product_id=line["product_id"],
+            product_name=line["product_name"],
+            category=line.get("category", "Hardware"),
+            quantity=line["quantity"],
+            unit_price=line["unit_price"],
+            cost_price=line["cost_price"],
+            discount_percent=line["discount_pct"],
+            line_total=line["line_total"],
+            line_margin=line["line_margin_pct"],
+            is_recurring=line.get("is_recurring", False),
+            billing_cycle=line.get("billing_cycle", None)
+        ))
+
+    db.add(AuditLog(
+        id=f"log-{uuid.uuid4().hex[:6]}",
+        quotation_id=quote_id,
+        entity_type="Quotation",
+        entity_id=quote_id,
+        user_id=rep_name,
+        action="Created Quotation",
+        performed_by=rep_name,
+        details=f"Created quotation {quote_num} for {customer_name}. Blended Risk: {risk_score}%, Routing: {approval_req}."
+    ))
+
+
+    db.commit()
+    db.refresh(new_quote)
+
+    return {
+        "id": new_quote.id,
+        "quote_number": new_quote.quote_number,
+        "customer_name": new_quote.customer_name,
+        "customer_tier": new_quote.customer_tier,
+        "rep_name": new_quote.rep_name,
+        "status": new_quote.status,
+        "blended_risk_score": new_quote.blended_risk_score,
+        "approval_required": new_quote.approval_required,
+        "subtotal": float(new_quote.subtotal),
+        "total_discount": float(new_quote.total_discount),
+        "grand_total": float(new_quote.grand_total),
+        "margin_percent": float(new_quote.margin_percent)
+    }
 
 @router.post("/live-cart-preview")
+
 def live_cart_preview(payload: CartPreviewInput, db: Session = Depends(get_db)):
     """
     POST /api/quotations/live-cart-preview
@@ -153,14 +262,17 @@ def update_quotation_cart(quote_id: str, payload: CartPreviewInput, db: Session 
             quotation_id=quote_id,
             product_id=line["product_id"],
             product_name=line["product_name"],
-            category="Hardware",
+            category=line.get("category", "Hardware"),
             quantity=line["quantity"],
             unit_price=line["unit_price"],
             cost_price=line["cost_price"],
             discount_percent=line["discount_pct"],
             line_total=line["line_total"],
-            line_margin=line["line_margin_pct"]
+            line_margin=line["line_margin_pct"],
+            is_recurring=line.get("is_recurring", False),
+            billing_cycle=line.get("billing_cycle", None)
         ))
+
 
     quote.subtotal = totals["subtotal"]
     quote.total_discount = totals["total_discount"]

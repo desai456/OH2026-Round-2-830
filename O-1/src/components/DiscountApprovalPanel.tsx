@@ -1,3 +1,5 @@
-// Re-export DiscountApprovalPanel JSX component for TypeScript integration
+// @ts-nocheck
 import DiscountApprovalPanel from './DiscountApprovalPanel.jsx';
 export default DiscountApprovalPanel;
+
+

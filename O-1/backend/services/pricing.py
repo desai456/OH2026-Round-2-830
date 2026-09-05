@@ -59,9 +59,14 @@ class PricingEngine:
             total_selling_price_dec += line_selling_price_total_dec
             total_cost_dec += line_cost_total_dec
 
+            category = product.category if (product and product.category) else item.get("category", "Hardware")
+            is_recurring = (category == "Subscriptions") or bool(item.get("is_recurring", False))
+            billing_cycle = item.get("billing_cycle", "Annual" if is_recurring else None)
+
             lines_output.append({
                 "product_id": pid,
                 "product_name": product_name,
+                "category": category,
                 "quantity": int(qty),
                 "unit_price": float(unit_selling_price_dec),
                 "list_price": float(list_price_dec),
@@ -70,8 +75,11 @@ class PricingEngine:
                 "selling_price": float(unit_selling_price_dec),
                 "line_total": float(line_selling_price_total_dec),
                 "line_cost": float(line_cost_total_dec),
-                "line_margin_pct": float(line_margin_pct_dec)
+                "line_margin_pct": float(line_margin_pct_dec),
+                "is_recurring": is_recurring,
+                "billing_cycle": billing_cycle
             })
+
 
         # Blended Cart Margin % = ((Total Selling Price - Total Cost) / Total Selling Price) * 100
         if total_selling_price_dec > Decimal("0.00"):
